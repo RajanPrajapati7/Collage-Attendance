@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
+import { fetchDemoData } from '../lib/api';
 import type {
   Role, ThemeMode, Student, Teacher, Subject,
   AttendanceRecord, Mark, Assignment, Fee,
@@ -51,44 +51,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAll = useCallback(async () => {
     setData((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      const [
-        studentsR, teachersR, subjectsR, attendanceR, marksR,
-        assignmentsR, feesR, eventsR, notificationsR, timetableR, booksR,
-      ] = await Promise.all([
-        supabase.from('students').select('*').order('name'),
-        supabase.from('teachers').select('*').order('name'),
-        supabase.from('subjects').select('*'),
-        supabase.from('attendance').select('*').order('date', { ascending: false }),
-        supabase.from('marks').select('*'),
-        supabase.from('assignments').select('*').order('deadline'),
-        supabase.from('fees').select('*').order('due_date', { ascending: false }),
-        supabase.from('events').select('*').order('date'),
-        supabase.from('notifications').select('*').order('created_at', { ascending: false }),
-        supabase.from('timetable').select('*').order('day').order('period'),
-        supabase.from('books').select('*').order('title'),
-      ]);
-
-      const errors = [
-        studentsR, teachersR, subjectsR, attendanceR, marksR,
-        assignmentsR, feesR, eventsR, notificationsR, timetableR, booksR,
-      ].filter((r) => r.error);
-
-      if (errors.length > 0) {
-        throw new Error(errors[0].error?.message || 'Failed to load data');
-      }
-
+      const data = await fetchDemoData();
       setData({
-        students: studentsR.data || [],
-        teachers: teachersR.data || [],
-        subjects: subjectsR.data || [],
-        attendance: attendanceR.data || [],
-        marks: marksR.data || [],
-        assignments: assignmentsR.data || [],
-        fees: feesR.data || [],
-        events: eventsR.data || [],
-        notifications: notificationsR.data || [],
-        timetable: timetableR.data || [],
-        books: booksR.data || [],
+        students: (data.students || []) as Student[],
+        teachers: (data.teachers || []) as Teacher[],
+        subjects: (data.subjects || []) as Subject[],
+        attendance: (data.attendance || []) as AttendanceRecord[],
+        marks: (data.marks || []) as Mark[],
+        assignments: (data.assignments || []) as Assignment[],
+        fees: (data.fees || []) as Fee[],
+        events: (data.events || []) as EventItem[],
+        notifications: (data.notifications || []) as NotificationItem[],
+        timetable: (data.timetable || []) as TimetableEntry[],
+        books: (data.books || []) as Book[],
         loading: false, error: null, refresh: loadAll,
       });
     } catch (err) {
