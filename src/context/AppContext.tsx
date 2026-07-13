@@ -51,6 +51,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAll = useCallback(async () => {
     setData((prev) => ({ ...prev, loading: true, error: null }));
     try {
+      if (!supabase) {
+        setData((prev) => ({
+          ...prev,
+          loading: false,
+          error: 'Database connection is not available.',
+          refresh: loadAll,
+        }));
+        return;
+      }
+
       const [
         studentsR, teachersR, subjectsR, attendanceR, marksR,
         assignmentsR, feesR, eventsR, notificationsR, timetableR, booksR,
